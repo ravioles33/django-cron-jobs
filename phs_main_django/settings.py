@@ -9,6 +9,14 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+LW_API_KEY = os.getenv('LW_API_KEY')
+LW_SECRET_KEY = os.getenv('LW_SECRET_KEY')
+
 
 from pathlib import Path
 
