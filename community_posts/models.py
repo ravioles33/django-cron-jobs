@@ -22,8 +22,8 @@ class Post(models.Model):
     scheduled_time = models.DateTimeField()
 
     def clean(self):
-        # Asegúrate de que la hora de publicación no esté en el pasado
-        if self.scheduled_time < timezone.now():
+        # Asegúrate de que la hora de publicación no esté en el pasado solo si el estado es 'pending'
+        if self.status == 'pending' and self.scheduled_time < timezone.now():
             raise ValidationError('La fecha y hora de publicación no pueden estar en el pasado.')
 
     def save(self, *args, **kwargs):
