@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q_5yb)nip!nhd*c8psag&jjyw=l5hlfov&i&idis-2dy$3*6u5'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'tutor_profile',
     'community_posts',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +144,13 @@ print(f"Buenos Aires time (GMT{datetime_buenos_aires.strftime('%z')}): {datetime
 """
 Esto define la zona horaria de Madrid en el archivo `settings.py`, lo que asegura que Django maneje correctamente los horarios de verano e invierno. Además, se muestra cómo obtener las horas de Madrid y Buenos Aires con su respectiva zona horaria.
 """
+
+# Configuración de Celery
+CELERY_BROKER_URL = 'amqp://localhost'  # URL del broker (RabbitMQ en este caso)
+CELERY_RESULT_BACKEND = 'rpc://'         # Backend de resultados (RPC o AMQP)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Madrid'        # Configura la misma zona horaria
+# Configuración de reintento de conexión del broker
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
