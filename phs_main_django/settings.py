@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'tutor_profile',
     'community_posts',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [

@@ -20,3 +20,13 @@ def debug_task(self):
     print('Request: {0!r}'.format(self.request))
 
 app.conf.broker_connection_retry_on_startup = True
+
+###
+from celery.schedules import crontab
+
+app.conf.beat_schedule = {
+    'check-pending-posts-every-5-minutes': {
+        'task': 'community_posts.tasks.check_pending_posts',
+        'schedule': crontab(minute='*/5'),
+    },
+}
