@@ -11,13 +11,13 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from dotenv import load_dotenv
+from pathlib import Path
+import pytz
 
 load_dotenv()
 
 LW_API_KEY = os.getenv('LW_API_KEY')
 LW_SECRET_KEY = os.getenv('LW_SECRET_KEY')
-
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'tutor_profile',
+    'community_posts',
 ]
 
 MIDDLEWARE = [
@@ -111,10 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Europe/Madrid'
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -126,3 +127,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Example usage of pytz for datetime handling
+madrid_tz = pytz.timezone('Europe/Madrid')
+buenos_aires_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+
+from datetime import datetime
+
+# Get current time in Madrid and Buenos Aires, including timezone info
+datetime_madrid = datetime.now(madrid_tz)
+datetime_buenos_aires = datetime.now(buenos_aires_tz)
+
+print(f"Madrid time (GMT{datetime_madrid.strftime('%z')}): {datetime_madrid.strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"Buenos Aires time (GMT{datetime_buenos_aires.strftime('%z')}): {datetime_buenos_aires.strftime('%Y-%m-%d %H:%M:%S')}")
+"""
+Esto define la zona horaria de Madrid en el archivo `settings.py`, lo que asegura que Django maneje correctamente los horarios de verano e invierno. Además, se muestra cómo obtener las horas de Madrid y Buenos Aires con su respectiva zona horaria.
+"""
