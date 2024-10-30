@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Servicio web que ejecuta la aplicación Django
+  web:
+    build:
+      context: .  # Directorio de contexto para construir la imagen Docker
+      dockerfile: Dockerfile  # Archivo Dockerfile a usar
+    command: >
+      # Ejecuta las migraciones de la base de datos, recolecta los archivos estáticos y corre Gunicorn
+      sh -c "python manage.py migrate && \
+             python manage.py collectstatic --no-input && \
+             gunicorn phs_main_django.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+    env_file:
+      - .env  # Archivo de variables de entorno
+    ports:
+      - "8000:8000"  # Expone el puerto 8000 del contenedor en el puerto 8000 de la máquina host
+    depends_on:
+      - db  # Este servicio depende de la base de datos (db)
+      - rabbitmq  # Este servicio depende de RabbitMQ
+
+  # Servicio de base de datos PostgreSQL
+  db:
+    image: postgres:14  # Imagen oficial de PostgreSQL, versión 14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volumen para la persistencia de los datos de PostgreSQL
+    env_file:
+      - .env  # Archivo de variables de entorno para la configuración de la base de datos
+
+  # Servicio de RabbitMQ con la interfaz de administración
+  rabbitmq:
+    image: rabbitmq:3-management  # Imagen oficial de RabbitMQ con la interfaz de administración
+    ports:
+      - "15672:15672"  # Puerto 15672 para la interfaz de administración de RabbitMQ
+      - "5672:5672"  # Puerto 5672 para la comunicación con los clientes
+    environment:
+      RABBITMQ_DEFAULT_USER: guest  # Usuario predeterminado para RabbitMQ
+      RABBITMQ_DEFAULT_PASS: guest  # Contraseña predeterminada para RabbitMQ
+
+  # Servicio de Celery Worker para ejecutar tareas en segundo plano
+  celery_worker:
+    build:
+      context: .  # Directorio de contexto para construir la imagen Docker
+      dockerfile: Dockerfile  # Archivo Dockerfile a usar
+    command: celery -A phs_main_django worker --loglevel=info  # Comando para iniciar el worker de Celery
+    volumes:
+      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+    env_file:
+      - .env  # Archivo de variables de entorno
+    depends_on:
+      - db  # Este servicio depende de la base de datos (db)
+      - rabbitmq  # Este servicio depende de RabbitMQ
+
+  # Servicio de Celery Beat para programar tareas
+  celery_beat:
+    build:
+      context: .  # Directorio de contexto para construir la imagen Docker
+      dockerfile: Dockerfile  # Archivo Dockerfile a usar
+    command: celery -A phs_main_django beat --loglevel=info  # Comando para iniciar Celery Beat
+    volumes:
+      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+    env_file:
+      - .env  # Archivo de variables de entorno
+    depends_on:
+      - db  # Este servicio depende de la base de datos (db)
+      - rabbitmq  # Este servicio depende de RabbitMQ
+
+# Volumen para la persistencia de los datos de PostgreSQL
+volumes:
+  postgres_data:
