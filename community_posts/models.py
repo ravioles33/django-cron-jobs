@@ -13,7 +13,13 @@ class Post(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pendiente'),
         ('published', 'Publicado'),
-        ('error', 'Error')
+        ('error', 'Error'),
+        ('error-1', 'Error - Intento 1'),
+        ('error-2', 'Error - Intento 2'),
+        ('error-3', 'Error - Intento 3'),
+        ('error-4', 'Error - Intento 4'),
+        ('error-5', 'Error - Intento 5'),
+        ('error-00', 'Error - Sin reintentos disponibles')
     ]
 
     community = models.ForeignKey(Community, on_delete=models.CASCADE)
@@ -33,3 +39,12 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post to {self.community.name} at {self.scheduled_time} - Status: {self.status}"
+
+    def retry_publication(self):
+        if self.status.startswith('error') and self.status != 'error-00':
+            current_attempt = int(self.status.split('-')[-1]) if '-' in self.status else 0
+            if current_attempt < 5:
+                self.status = f'error-{current_attempt + 1}'
+            else:
+                self.status = 'error-00'
+            self.save()

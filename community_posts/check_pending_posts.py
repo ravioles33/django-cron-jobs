@@ -9,6 +9,7 @@ django.setup()
 
 from django.utils import timezone
 from community_posts.models import Post
+from community_posts.tasks import execute_publish_script
 
 def check_pending_posts():
     now = timezone.now()
@@ -20,15 +21,16 @@ def check_pending_posts():
         if success:
             post.status = 'published'
         else:
-            post.status = 'error'
+            if "error-" in post.status:
+                current_attempt = int(post.status.split('-')[1])
+                if current_attempt < 5:
+                    post.status = f'error-{current_attempt + 1}'
+                else:
+                    post.status = 'error-00'
+            else:
+                post.status = 'error-1'
 
         post.save()
-
-def execute_publish_script(post):
-    # Aquí iría la lógica para publicar el mensaje en la plataforma
-    # Por ahora podemos simular el resultado de la publicación
-    print(f"Intentando publicar el post: {post}")
-    return True  # Simular éxito (o False para simular un error)
 
 if __name__ == "__main__":
     check_pending_posts()
