@@ -1,3 +1,5 @@
+# phs_main_django/celery.py
+
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
@@ -26,7 +28,7 @@ from celery.schedules import crontab
 
 app.conf.beat_schedule = {
     'check-pending-posts-every-5-minutes': {
-        'task': 'community_posts.tasks.check_pending_posts',
+        'task': 'community_posts.tasks.check_pending_posts_task',
         'schedule': crontab(minute='*/5'),
     },
 }

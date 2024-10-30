@@ -1,34 +1,29 @@
-import os
-import django
-import sys
+# community_posts/check_pending_posts.py
 
-# Configuración de Django
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'phs_main_django.settings')
-django.setup()
-
+from .utils.selenium_publish import execute_publish_script
+from .utils.post_status_manager import update_post_status
+from .models import Post
 from django.utils import timezone
-from community_posts.models import Post
+from .utils.logger_util import setup_logger
 
 def check_pending_posts():
+    logger = setup_logger("check_pending_posts")
+
     now = timezone.now()
-    pending_posts = Post.objects.filter(status='pending', scheduled_time__lte=now)
+    pending_posts = Post.objects.filter(status__in=['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4'], scheduled_time__lte=now)
 
     for post in pending_posts:
-        success = execute_publish_script(post)
-
-        if success:
-            post.status = 'published'
-        else:
-            post.status = 'error'
+        try:
+            logger.info(f"Procesando post: {post.content}")
+            success = execute_publish_script(post, logger)
+            if success:
+                post.status = 'published'
+                logger.info(f"Publicado exitosamente: {post.content}")
+            else:
+                update_post_status(post, logger)
+                logger.warning(f"Error al publicar: {post.content}, nuevo estado: {post.status}")
+        except Exception as e:
+            update_post_status(post, logger)
+            logger.error(f"Error durante la publicación de {post.content}, Error: {str(e)}")
 
         post.save()
-
-def execute_publish_script(post):
-    # Aquí iría la lógica para publicar el mensaje en la plataforma
-    # Por ahora podemos simular el resultado de la publicación
-    print(f"Intentando publicar el post: {post}")
-    return True  # Simular éxito (o False para simular un error)
-
-if __name__ == "__main__":
-    check_pending_posts()
