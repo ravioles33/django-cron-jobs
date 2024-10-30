@@ -3,6 +3,8 @@ from .models import Post
 from django.utils import timezone
 import os
 import requests  # Import para manejar la sesión
+import logging
+
 def create_session():
     # Crear una nueva sesión para cada ejecución de la tarea para evitar problemas de concurrencia
     return requests.Session()
@@ -18,10 +20,27 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Cargar las variables de entorno
 
+# Configuración de la carpeta de logs
+def setup_logging():
+    now = datetime.now()
+    log_dir = os.path.join(os.getcwd(), 'logs', 'tasks_script_selenium', now.strftime('%Y-%m-%d'))
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    log_filename = os.path.join(log_dir, now.strftime('%Y-%m-%d-%H-%M-%S') + '_log.txt')
+
+    logging.basicConfig(
+        filename=log_filename,
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+    )
+
 @shared_task
 def check_pending_posts():
+    setup_logging()
     now = timezone.now()
-    pending_posts = Post.objects.filter(status='pending', scheduled_time__lte=now)
+    # Asegurarse de incluir todos los estados de error para reintentar la publicación
+    pending_posts = Post.objects.filter(status__in=['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4', 'error-5'], scheduled_time__lte=now)
+    logging.info(f'Comenzando a procesar {len(pending_posts)} posts pendientes.')
 
     for post in pending_posts:
         try:
@@ -31,25 +50,26 @@ def check_pending_posts():
             success = execute_publish_script(post, session)
             if success:
                 post.status = 'published'  # Actualiza el estado a 'publicado' si se hace correctamente
-                print(f"Publicado: {post.content}")
+                logging.info(f'Publicado correctamente: {post.content}')
             else:
                 update_post_status(post)
-                print(f"Error al publicar: {post.content}, reintentando: {post.status}")
+                logging.warning(f'Error al publicar: {post.content}, nuevo estado: {post.status}')
         except Exception as e:
             update_post_status(post)
-            print(f"Error durante la publicación: {post.content}, Error: {e}")
+            logging.error(f'Error durante la publicación: {post.content}, Error: {str(e)}, nuevo estado: {post.status}')
 
         post.save()
 
 def update_post_status(post):
     # Actualiza el estado del post según el número de reintentos
-    error_statuses = ['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4']
+    error_statuses = ['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4', 'error-5']
     if post.status in error_statuses:
         current_index = error_statuses.index(post.status)
         if current_index < len(error_statuses) - 1:
             post.status = error_statuses[current_index + 1]
         else:
-            post.status = 'error-00'  # Marca como error final después de 5 intentos
+            post.status = 'error-00'  # Marca como error final después de 5 intentos fallidos
+    logging.info(f'Actualizado el estado del post "{post.content}" a "{post.status}"')
 
 def execute_publish_script(post, session):
     # Información del usuario desde variables de entorno
@@ -68,7 +88,7 @@ def execute_publish_script(post, session):
     try:
         login_page_url = 'https://go.producthackers.com/?msg=not-logged-in'
         driver.get(login_page_url)
-        print('Página cargada')
+        logging.info('Página cargada')
 
         wait = WebDriverWait(driver, 30)
 
@@ -78,9 +98,9 @@ def execute_publish_script(post, session):
             accept_button = cookie_banner.find_element(By.XPATH, ".//button[contains(text(), '¡Entendido!')]")
             accept_button.click()
             wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, 'div.lw-cookie-disclaimer')))
-            print('Banner de cookies cerrado')
+            logging.info('Banner de cookies cerrado')
         except Exception as e:
-            print('No se detectó banner de cookies o hubo un error al cerrarlo:', e)
+            logging.warning(f'No se detectó banner de cookies o hubo un error al cerrarlo: {str(e)}')
 
         # Esperar a que el modal de inicio de sesión esté visible
         modal = wait.until(EC.visibility_of_element_located((By.ID, 'animatedModal')))
@@ -91,11 +111,11 @@ def execute_publish_script(post, session):
         email_input.send_keys(username)
         password_input.send_keys(password)
         login_button = modal.find_element(By.CSS_SELECTOR, 'div#submitLogin')
-        login_button.click()
+        driver.execute_script("arguments[0].click();", login_button)  # Usar JavaScript para evitar la superposición de elementos
 
         # Esperar a que la URL cambie indicando inicio de sesión exitoso
         wait.until(EC.url_contains('dashboard'))
-        print('Inicio de sesión exitoso')
+        logging.info('Inicio de sesión exitoso')
 
         # Extraer las cookies de la sesión
         cookies = driver.get_cookies()
@@ -108,9 +128,9 @@ def execute_publish_script(post, session):
         csrf_token = csrf_token_match.group(1) if csrf_token_match else None
 
         if csrf_token:
-            print('Token CSRF obtenido desde HTML:', csrf_token)
+            logging.info(f'Token CSRF obtenido desde HTML: {csrf_token}')
         else:
-            print('No se pudo obtener el token CSRF desde el HTML')
+            logging.error('No se pudo obtener el token CSRF desde el HTML')
             return False
 
         # URL del endpoint
@@ -146,17 +166,17 @@ def execute_publish_script(post, session):
         response = session.post(url, headers=headers, json=data)
 
         # Verificar el resultado
-        print(f'Status Code: {response.status_code}')
-        print(f'Response: {response.text}')
+        logging.info(f'Status Code: {response.status_code}')
+        logging.info(f'Response: {response.text}')
 
         return response.status_code == 200
 
     except Exception as e:
-        print(f'Error durante el inicio de sesión: {e}')
+        logging.error(f'Error durante el inicio de sesión: {str(e)}')
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        screenshot_name = f'login_error_{timestamp}.png'
+        screenshot_name = os.path.join(os.getcwd(), 'logs', 'tasks_script_selenium', datetime.now().strftime('%Y-%m-%d'), f'login_error_{timestamp}.png')
         driver.save_screenshot(screenshot_name)
-        print(f'Captura de pantalla guardada como {screenshot_name}')
+        logging.error(f'Captura de pantalla guardada como {screenshot_name}')
         return False
 
     finally:
