@@ -9,11 +9,34 @@ Este proyecto está diseñado para gestionar publicaciones programadas en comuni
 - **RabbitMQ**: Cola de mensajes para las tareas de Celery.
 - **Docker**: Virtualización de todos los componentes.
 
-## Características del Proyecto
-- Gestión de publicaciones programadas.
-- Sistema de usuarios y credenciales para tutoras.
-- Publicaciones automáticas con estado (`pending`, `published`, `error`).
-- Ejecución de tareas en segundo plano utilizando Celery.
+## Estructura de Archivos
+
+### Ubicaciones de Archivos Clave:
+- **`tasks.py`**: `community_posts/tasks.py`
+  - Define las tareas de Celery.
+- **`check_pending_posts.py`**: `community_posts/check_pending_posts.py`
+  - Revisa los posts pendientes y los publica si es posible.
+- **`selenium_publish.py`**: `community_posts/utils/selenium_publish.py`
+  - Contiene el script Selenium para la publicación.
+- **`post_status_manager.py`**: `community_posts/utils/post_status_manager.py`
+  - Administra el estado del post después de cada intento de publicación.
+- **`logger_util.py`**: `community_posts/utils/logger_util.py`
+  - Define la configuración de logs para registrar los procesos.
+
+## Flujo de Trabajo
+
+1. **Creación de Usuario Tutor**:
+   - Un usuario tutor se registra en la plataforma a través del panel de administración de Django o utilizando la API.
+   - Una vez registrado, el tutor puede iniciar sesión y acceder a la sección de publicaciones.
+
+2. **Inicio de Sesión y Creación de Post Programado**:
+   - El tutor se loguea en la plataforma y navega hasta la sección de comunidades.
+   - Aquí puede crear un post y definir una hora específica para la publicación (es decir, se programa la publicación).
+
+3. **Publicación Automática del Post**:
+   - Celery ejecuta una tarea cada ciertos minutos que revisa las publicaciones pendientes (`check_pending_posts()`).
+   - La función `check_pending_posts()` utiliza el script Selenium (`execute_publish_script()`) para iniciar sesión automáticamente, recuperar el token CSRF y hacer una solicitud a la API de publicación.
+   - En caso de éxito, el estado del post se actualiza a `published`. Si falla, se actualiza el estado (`error`, `error-1`, etc.) y el sistema vuelve a intentarlo hasta cinco veces antes de darlo por fallido (`error-00`).
 
 ## Instalación
 Para instalar y ejecutar el proyecto, sigue los siguientes pasos:
@@ -95,4 +118,3 @@ Cualquier contribución al proyecto es bienvenida. Puedes hacer un fork del repo
 
 ## Licencia
 Este proyecto está bajo la licencia MIT.
-
