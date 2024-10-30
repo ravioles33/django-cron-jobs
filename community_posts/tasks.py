@@ -1,3 +1,5 @@
+# community_posts/tasks.py
+
 from celery import shared_task
 from .check_pending_posts import check_pending_posts
 

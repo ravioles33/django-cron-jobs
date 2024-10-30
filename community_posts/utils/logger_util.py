@@ -1,3 +1,5 @@
+# community_posts/utils/logger_util.py
+
 import logging
 import os
 from datetime import datetime
@@ -15,7 +17,6 @@ def setup_logger(script_name):
     logger = logging.getLogger(script_name)
     logger.setLevel(logging.DEBUG)
 
-    # Evitar duplicados de manejadores de archivos
     if not logger.hasHandlers():
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)

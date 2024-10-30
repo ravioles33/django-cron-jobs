@@ -1,3 +1,5 @@
+# community_posts/check_pending_posts.py
+
 from .utils.selenium_publish import execute_publish_script
 from .utils.post_status_manager import update_post_status
 from .models import Post
@@ -13,7 +15,6 @@ def check_pending_posts():
     for post in pending_posts:
         try:
             logger.info(f"Procesando post: {post.content}")
-            # Ejecutar el script de publicación con Selenium
             success = execute_publish_script(post, logger)
             if success:
                 post.status = 'published'
