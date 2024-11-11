@@ -1,37 +1,41 @@
-# django-cron-jobs/Dockerfile
+# Ruta: ./Dockerfile
+
+# Dockerfile
+
+# Imagen base de Python
 FROM python:3.12-slim
 
-# Establecer el directorio de trabajo
+# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias necesarias para compilar librerías y herramientas necesarias
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
-    gettext \
-    curl \
+    wget \
+    netcat \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar archivo de requerimientos
+# Descargar Dockerize
+RUN wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz \
+    && rm dockerize-linux-amd64-v0.6.1.tar.gz
+
+# Copiar el archivo de requerimientos
 COPY requirements.txt /app/requirements.txt
 
-# Instalar dependencias de Python
+# Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar el código de la aplicación
+# Copiar el resto del código al contenedor
 COPY . .
 
-# Copiar script de espera
-COPY wait-for-it.sh /app/wait-for-it.sh
-RUN chmod +x /app/wait-for-it.sh
+# Copiar el script de entrada
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-# Cargar la configuración de entorno desde archivo .env
-ENV DJANGO_SETTINGS_MODULE=phs_main_django.settings
-ARG ENV
-ENV ENV=${ENV}
-
-# Exponer el puerto que usa Gunicorn
+# Puerto en el que se ejecutará la aplicación
 EXPOSE 8000
 
-# Comando para correr en el contenedor (por defecto Gunicorn)
-CMD ["gunicorn", "phs_main_django.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Comando por defecto para iniciar el servidor
+CMD ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]

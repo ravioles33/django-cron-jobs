@@ -1,74 +1,127 @@
-# django-cron-jobs/docker-compose.yml
-version: '3.8'
+# Ruta: ./docker-compose.yml
 
 services:
+  db:
+    image: postgres:14
+    container_name: django-cron-jobs-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: django-cron-jobs-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: >
-      sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- python manage.py migrate && \
-             python manage.py collectstatic --no-input && \
-             gunicorn phs_main_django.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    build: .
+    container_name: django-cron-jobs-web
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]
     volumes:
       - .:/app
-    env_file:
-      - .env
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
-
-  db:
-    image: postgres:14
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "15672:15672"
-      - "5672:5672"
+        condition: service_healthy
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   celery_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- celery -A phs_main_django worker --loglevel=info"
+    build: .
+    container_name: django-cron-jobs-celery_worker
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["celery", "-A", "phs_main_django", "worker", "--loglevel=info"]
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   celery_beat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- celery -A phs_main_django beat --loglevel=info"
+    build: .
+    container_name: django-cron-jobs-celery_beat
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["celery", "-A", "phs_main_django", "beat", "--loglevel=info"]
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   postgres_data:

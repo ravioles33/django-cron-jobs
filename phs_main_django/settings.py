@@ -1,9 +1,8 @@
-# phs_main_django/settings.py
+# Ruta: ./phs_main_django/settings.py
 
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-import pytz
 
 load_dotenv()
 
@@ -14,9 +13,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -67,7 +66,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'HOST': os.getenv('DB_HOST', 'db'),  # Usamos 'db' como host por defecto
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
@@ -91,27 +90,26 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Europe/Madrid'
 USE_I18N = True
+USE_L10N = True  # Asegúrate de incluir esta configuración si está en tu proyecto
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Puedes ajustar esto según tus necesidades
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-madrid_tz = pytz.timezone('Europe/Madrid')
-buenos_aires_tz = pytz.timezone('America/Argentina/Buenos_Aires')
-
-from datetime import datetime
-
-datetime_madrid = datetime.now(madrid_tz)
-datetime_buenos_aires = datetime.now(buenos_aires_tz)
-
-print(f"Madrid time (GMT{datetime_madrid.strftime('%z')}): {datetime_madrid.strftime('%Y-%m-%d %H:%M:%S')}")
-print(f"Buenos Aires time (GMT{datetime_buenos_aires.strftime('%z')}): {datetime_buenos_aires.strftime('%Y-%m-%d %H:%M:%S')}")
-
-CELERY_BROKER_URL = 'amqp://localhost'
+# Configuración de Celery
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@rabbitmq:5672//')
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Madrid'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Otras configuraciones personalizadas
+DJANGO_SETTINGS_MODULE = os.getenv('DJANGO_SETTINGS_MODULE', 'phs_main_django.settings')
+
+# Si utilizas pytz en algún lugar, asegúrate de tenerlo instalado y configurado
+import pytz
+TIME_ZONE = 'Europe/Madrid'
