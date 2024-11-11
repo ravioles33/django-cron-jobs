@@ -1,5 +1,3 @@
-# Ruta: ./Dockerfile
-
 # Dockerfile
 
 # Imagen base de Python
@@ -36,8 +34,8 @@ COPY . .
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Puerto en el que se ejecutará la aplicación
+# Exponer el puerto
 EXPOSE 8000
 
-# Comando por defecto para iniciar el servidor
+# Comando por defecto (opcional, ya que lo especificamos en docker-compose)
 CMD ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]
