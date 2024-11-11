@@ -1,72 +1,74 @@
+# django-cron-jobs/docker-compose.yml
 version: '3.8'
 
 services:
-  # Servicio web que ejecuta la aplicación Django
   web:
     build:
-      context: .  # Directorio de contexto para construir la imagen Docker
-      dockerfile: Dockerfile  # Archivo Dockerfile a usar
+      context: .
+      dockerfile: Dockerfile
     command: >
-      # Ejecuta las migraciones de la base de datos, recolecta los archivos estáticos y corre Gunicorn
-      sh -c "python manage.py migrate && \
+      sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- python manage.py migrate && \
              python manage.py collectstatic --no-input && \
              gunicorn phs_main_django.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
-      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+      - .:/app
     env_file:
-      - .env  # Archivo de variables de entorno
+      - .env
     ports:
-      - "8000:8000"  # Expone el puerto 8000 del contenedor en el puerto 8000 de la máquina host
+      - "8000:8000"
     depends_on:
-      - db  # Este servicio depende de la base de datos (db)
-      - rabbitmq  # Este servicio depende de RabbitMQ
+      db:
+        condition: service_healthy
+      rabbitmq:
 
-  # Servicio de base de datos PostgreSQL
   db:
-    image: postgres:14  # Imagen oficial de PostgreSQL, versión 14
+    image: postgres:14
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Volumen para la persistencia de los datos de PostgreSQL
+      - postgres_data:/var/lib/postgresql/data
     env_file:
-      - .env  # Archivo de variables de entorno para la configuración de la base de datos
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Servicio de RabbitMQ con la interfaz de administración
   rabbitmq:
-    image: rabbitmq:3-management  # Imagen oficial de RabbitMQ con la interfaz de administración
+    image: rabbitmq:3-management
     ports:
-      - "15672:15672"  # Puerto 15672 para la interfaz de administración de RabbitMQ
-      - "5672:5672"  # Puerto 5672 para la comunicación con los clientes
+      - "15672:15672"
+      - "5672:5672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest  # Usuario predeterminado para RabbitMQ
-      RABBITMQ_DEFAULT_PASS: guest  # Contraseña predeterminada para RabbitMQ
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
-  # Servicio de Celery Worker para ejecutar tareas en segundo plano
   celery_worker:
     build:
-      context: .  # Directorio de contexto para construir la imagen Docker
-      dockerfile: Dockerfile  # Archivo Dockerfile a usar
-    command: celery -A phs_main_django worker --loglevel=info  # Comando para iniciar el worker de Celery
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- celery -A phs_main_django worker --loglevel=info"
     volumes:
-      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+      - .:/app
     env_file:
-      - .env  # Archivo de variables de entorno
+      - .env
     depends_on:
-      - db  # Este servicio depende de la base de datos (db)
-      - rabbitmq  # Este servicio depende de RabbitMQ
+      db:
+        condition: service_healthy
+      rabbitmq:
 
-  # Servicio de Celery Beat para programar tareas
   celery_beat:
     build:
-      context: .  # Directorio de contexto para construir la imagen Docker
-      dockerfile: Dockerfile  # Archivo Dockerfile a usar
-    command: celery -A phs_main_django beat --loglevel=info  # Comando para iniciar Celery Beat
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "./wait-for-it.sh db:5432 -- ./wait-for-it.sh rabbitmq:5672 -- celery -A phs_main_django beat --loglevel=info"
     volumes:
-      - .:/app  # Monta el directorio actual en /app dentro del contenedor
+      - .:/app
     env_file:
-      - .env  # Archivo de variables de entorno
+      - .env
     depends_on:
-      - db  # Este servicio depende de la base de datos (db)
-      - rabbitmq  # Este servicio depende de RabbitMQ
+      db:
+        condition: service_healthy
+      rabbitmq:
 
-# Volumen para la persistencia de los datos de PostgreSQL
 volumes:
   postgres_data:
