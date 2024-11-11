@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     wget \
-    netcat \
+    netcat-openbsd \
+    bash \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Descargar Dockerize
