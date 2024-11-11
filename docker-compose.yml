@@ -19,8 +19,18 @@ services:
       DB_PORT: 5432
       DB_NAME: phs_cron_jobs
       DB_USER: postgres
-      DB_PASSWORD: postgres
-      # Añade aquí otras variables de entorno necesarias
+      DB_PASSWORD: admin  # Asegúrate de que coincida con POSTGRES_PASSWORD en db
+      DJANGO_SUPERUSER_USERNAME: "${DJANGO_SUPERUSER_USERNAME}"
+      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
+      LW_API_KEY: "${LW_API_KEY}"
+      LW_SECRET_KEY: "${LW_SECRET_KEY}"
+      LW_USERNAME: "${LW_USERNAME}"
+      LW_PASSWORD: "${LW_PASSWORD}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DEBUG: "${DEBUG}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS}"
+      DJANGO_SETTINGS_MODULE: "${DJANGO_SETTINGS_MODULE}"
+      CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   celery_worker:
     build: .
@@ -38,8 +48,16 @@ services:
       DB_PORT: 5432
       DB_NAME: phs_cron_jobs
       DB_USER: postgres
-      DB_PASSWORD: postgres
-      # Añade aquí otras variables de entorno necesarias
+      DB_PASSWORD: admin
+      LW_API_KEY: "${LW_API_KEY}"
+      LW_SECRET_KEY: "${LW_SECRET_KEY}"
+      LW_USERNAME: "${LW_USERNAME}"
+      LW_PASSWORD: "${LW_PASSWORD}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DEBUG: "${DEBUG}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS}"
+      DJANGO_SETTINGS_MODULE: "${DJANGO_SETTINGS_MODULE}"
+      CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   celery_beat:
     build: .
@@ -57,8 +75,16 @@ services:
       DB_PORT: 5432
       DB_NAME: phs_cron_jobs
       DB_USER: postgres
-      DB_PASSWORD: postgres
-      # Añade aquí otras variables de entorno necesarias
+      DB_PASSWORD: admin
+      LW_API_KEY: "${LW_API_KEY}"
+      LW_SECRET_KEY: "${LW_SECRET_KEY}"
+      LW_USERNAME: "${LW_USERNAME}"
+      LW_PASSWORD: "${LW_PASSWORD}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DEBUG: "${DEBUG}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS}"
+      DJANGO_SETTINGS_MODULE: "${DJANGO_SETTINGS_MODULE}"
+      CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   db:
     image: postgres:14
@@ -67,7 +93,7 @@ services:
       - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: admin  # Asegúrate de que coincida con DB_PASSWORD en .env
       POSTGRES_DB: postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -83,6 +109,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
       test: ["CMD-SHELL", "rabbitmqctl status"]
       interval: 10s

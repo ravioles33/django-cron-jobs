@@ -3,6 +3,9 @@
 # Imagen base de Python
 FROM python:3.12-slim
 
+# Crear un usuario y grupo no root
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
@@ -33,6 +36,12 @@ COPY . .
 # Copiar el script de entrada
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+
+# Cambiar la propiedad del directorio de trabajo al usuario no root
+RUN chown -R appuser:appgroup /app
+
+# Cambiar al usuario no root
+USER appuser
 
 # Exponer el puerto
 EXPOSE 8000

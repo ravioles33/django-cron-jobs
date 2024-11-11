@@ -18,6 +18,15 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     # Aplicar migraciones
     echo "Aplicando migraciones..."
     python manage.py migrate
+
+    # Crear superusuario de Django si no existe
+    echo "Creando superusuario de Django..."
+    python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); \
+if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists(): \
+    User.objects.create_superuser('$DJANGO_SUPERUSER_USERNAME', '', '$DJANGO_SUPERUSER_PASSWORD'); \
+    print('Superusuario creado.'); \
+else: \
+    print('El superusuario ya existe.');"
 fi
 
 # Ejecutar el comando proporcionado
