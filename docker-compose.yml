@@ -17,9 +17,9 @@ services:
       RUN_MIGRATIONS: "true"
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: phs_cron_jobs
-      DB_USER: postgres
-      DB_PASSWORD: admin  # Asegúrate de que coincida con POSTGRES_PASSWORD en db
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
       DJANGO_SUPERUSER_USERNAME: "${DJANGO_SUPERUSER_USERNAME}"
       DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
       LW_API_KEY: "${LW_API_KEY}"
@@ -46,9 +46,9 @@ services:
       RUN_MIGRATIONS: "false"
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: phs_cron_jobs
-      DB_USER: postgres
-      DB_PASSWORD: admin
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
       LW_API_KEY: "${LW_API_KEY}"
       LW_SECRET_KEY: "${LW_SECRET_KEY}"
       LW_USERNAME: "${LW_USERNAME}"
@@ -73,9 +73,9 @@ services:
       RUN_MIGRATIONS: "false"
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: phs_cron_jobs
-      DB_USER: postgres
-      DB_PASSWORD: admin
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
       LW_API_KEY: "${LW_API_KEY}"
       LW_SECRET_KEY: "${LW_SECRET_KEY}"
       LW_USERNAME: "${LW_USERNAME}"
@@ -92,11 +92,11 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin  # Asegúrate de que coincida con DB_PASSWORD en .env
-      POSTGRES_DB: postgres
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
