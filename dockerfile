@@ -33,12 +33,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto del código al contenedor
 COPY . .
 
-# Copiar el script de entrada
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Crear directorio para archivos estáticos
+RUN mkdir -p /app/staticfiles
 
 # Cambiar la propiedad del directorio de trabajo al usuario no root
 RUN chown -R appuser:appgroup /app
+
+# Copiar el script de entrada
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Cambiar al usuario no root
 USER appuser

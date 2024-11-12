@@ -35,6 +35,10 @@ else:
 EOF
 fi
 
+# Ejecutar collectstatic
+echo "Recopilando archivos estáticos..."
+python manage.py collectstatic --noinput
+
 # Ejecutar el comando proporcionado
 echo "Iniciando el servicio con el comando: $@"
 exec "$@"
