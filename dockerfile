@@ -9,7 +9,7 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instalar dependencias necesarias para compilar librerías y herramientas necesarias
+# Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -30,14 +30,14 @@ COPY requirements.txt /app/requirements.txt
 # Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar el resto del código al contenedor
-COPY . .
-
 # Crear directorio para archivos estáticos
 RUN mkdir -p /app/staticfiles
 
 # Cambiar la propiedad del directorio de trabajo al usuario no root
 RUN chown -R appuser:appgroup /app
+
+# Copiar el resto del código al contenedor
+COPY . .
 
 # Copiar el script de entrada
 COPY entrypoint.sh /app/entrypoint.sh
@@ -49,5 +49,5 @@ USER appuser
 # Exponer el puerto
 EXPOSE 8000
 
-# Comando por defecto (opcional, ya que lo especificamos en docker-compose)
+# Comando por defecto
 CMD ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]
