@@ -3,7 +3,7 @@ set -e
 
 # Esperar a que la base de datos y RabbitMQ estén listos
 echo "Esperando a que la base de datos y RabbitMQ estén listos..."
-dockerize -wait tcp://$DB_HOST:$DB_PORT -wait tcp://rabbitmq:5672 -timeout 60s -verbose
+dockerize -wait tcp://$DB_HOST:$DB_PORT -wait tcp://rabbitmq:5672 -timeout 60s
 
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     # Comprobar si la base de datos existe y crearla si es necesario
