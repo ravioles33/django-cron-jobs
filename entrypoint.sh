@@ -36,11 +36,15 @@ EOF
 fi
 
 if [ "$RUN_COLLECTSTATIC" = "true" ]; then
-    # Ejecutar collectstatic
+    # Ajustar permisos de /app/staticfiles
+    echo "Ajustando permisos de /app/staticfiles..."
+    chown -R appuser:appgroup /app/staticfiles
+
+    # Ejecutar collectstatic como appuser
     echo "Recopilando archivos estáticos..."
-    python manage.py collectstatic --noinput
+    gosu appuser python manage.py collectstatic --noinput
 fi
 
-# Ejecutar el comando proporcionado
+# Ejecutar el comando proporcionado como appuser
 echo "Iniciando el servicio con el comando: $@"
-exec "$@"
+exec gosu appuser "$@"
