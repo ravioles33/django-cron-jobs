@@ -1,5 +1,3 @@
-# community_posts/utils/selenium_publish.py
-
 import os
 import re
 import requests
@@ -24,11 +22,15 @@ def execute_publish_script(post, logger):
         return False
 
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--window-size=1920,1080')
+
+    # Establecer el directorio de datos de usuario para evitar problemas de permisos
+    chrome_options.add_argument('--user-data-dir=/tmp/chrome-data')
+    os.makedirs('/tmp/chrome-data', exist_ok=True)
 
     driver = webdriver.Chrome(options=chrome_options)
     try:

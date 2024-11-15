@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Establecer el directorio home para appuser
+export HOME=/home/appuser
+
 # Esperar a que la base de datos y RabbitMQ estén listos
 echo "Esperando a que la base de datos y RabbitMQ estén listos..."
 dockerize -wait tcp://$DB_HOST:$DB_PORT -wait tcp://rabbitmq:5672 -timeout 60s

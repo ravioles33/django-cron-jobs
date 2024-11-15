@@ -1,3 +1,5 @@
+# Dockerfile
+
 # Imagen base de Python
 FROM python:3.12-slim
 
@@ -14,8 +16,12 @@ RUN apt-get update && apt-get install -y \
     chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Crear un usuario y grupo no root
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Crear un usuario y grupo no root con directorio home
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --disabled-password appuser
+
+# Establecer el directorio home y permisos adecuados
+RUN mkdir -p /home/appuser/.cache/selenium && \
+    chown -R appuser:appgroup /home/appuser
 
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
