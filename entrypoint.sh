@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-# Esperar a que la base de datos esté lista
-echo "Esperando a que la base de datos esté lista..."
-dockerize -wait tcp://$DB_HOST:$DB_PORT -timeout 60s
+# Establecer el directorio home para appuser
+export HOME=/home/appuser
+
+# Esperar a que la base de datos y RabbitMQ estén listos
+echo "Esperando a que la base de datos y RabbitMQ estén listos..."
+dockerize -wait tcp://$DB_HOST:$DB_PORT -wait tcp://rabbitmq:5672 -timeout 60s
 
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     # Comprobar si la base de datos existe y crearla si es necesario
@@ -35,10 +38,16 @@ else:
 EOF
 fi
 
-# Ejecutar collectstatic
-echo "Recopilando archivos estáticos..."
-python manage.py collectstatic --noinput
+if [ "$RUN_COLLECTSTATIC" = "true" ]; then
+    # Ajustar permisos de /app/staticfiles
+    echo "Ajustando permisos de /app/staticfiles..."
+    chown -R appuser:appgroup /app/staticfiles
 
-# Ejecutar el comando proporcionado
+    # Ejecutar collectstatic como appuser
+    echo "Recopilando archivos estáticos..."
+    gosu appuser python manage.py collectstatic --noinput
+fi
+
+# Ejecutar el comando proporcionado como appuser
 echo "Iniciando el servicio con el comando: $@"
-exec "$@"
+exec gosu appuser "$@"

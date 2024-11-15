@@ -1,27 +1,30 @@
+```markdown
 # Django Cron Jobs Project
 
 Este proyecto está diseñado para gestionar publicaciones programadas en comunidades utilizando **Django**, **Celery**, **RabbitMQ** y **PostgreSQL**. La aplicación permite a las tutoras programar publicaciones que se ejecutarán automáticamente a la hora indicada, además de ofrecer una interfaz de administración a través de **Django Admin**.
 
 ## Tabla de Contenidos
 
-- [Tecnologías Utilizadas](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Estructura del Proyecto](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Archivos Clave](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Archivos de Configuración](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Puertos Utilizados](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Script para Liberar Puertos en Linux](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Flujo de Trabajo](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Instalación](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Pre-requisitos](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Paso a Paso](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Uso](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Consideraciones Adicionales](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Seguridad](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Persistencia de Datos](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-    - [Variables de Entorno](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Contribuciones](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Licencia](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
-- [Enlaces de Interés](https://www.notion.so/12-11-24-README-md-13c257b1b7cb808fb255dc0f4037ffdc?pvs=21)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+  - [Archivos Clave](#archivos-clave)
+  - [Archivos de Configuración](#archivos-de-configuración)
+- [Puertos Utilizados](#puertos-utilizados)
+  - [Script para Liberar Puertos en Linux](#script-para-liberar-puertos-en-linux)
+- [Flujo de Trabajo](#flujo-de-trabajo)
+- [Instalación](#instalación)
+  - [Pre-requisitos](#pre-requisitos)
+  - [Paso a Paso](#paso-a-paso)
+- [Uso](#uso)
+  - [Verificación de Servicios](#verificación-de-servicios)
+  - [Interactuar con la Aplicación](#interactuar-con-la-aplicación)
+- [Consideraciones Adicionales](#consideraciones-adicionales)
+  - [Seguridad](#seguridad)
+  - [Persistencia de Datos](#persistencia-de-datos)
+  - [Variables de Entorno](#variables-de-entorno)
+- [Contribuciones](#contribuciones)
+- [Licencia](#licencia)
+- [Enlaces de Interés](#enlaces-de-interés)
 
 ---
 
@@ -43,60 +46,60 @@ Este proyecto está diseñado para gestionar publicaciones programadas en comuni
 ### Archivos Clave
 
 - **`community_posts/tasks.py`**
-    - Define las tareas de Celery que se ejecutan en segundo plano.
+  - Define las tareas de Celery que se ejecutan en segundo plano.
 - **`community_posts/check_pending_posts.py`**
-    - Función que revisa los posts pendientes y los publica si es el momento adecuado.
+  - Función que revisa los posts pendientes y los publica si es el momento adecuado.
 - **`community_posts/utils/selenium_publish.py`**
-    - Contiene el script de Selenium que automatiza el proceso de inicio de sesión y publicación.
+  - Contiene el script de Selenium que automatiza el proceso de inicio de sesión y publicación.
 - **`community_posts/utils/post_status_manager.py`**
-    - Administra el estado de cada post después de cada intento de publicación, actualizando su estado según el resultado.
+  - Administra el estado de cada post después de cada intento de publicación, actualizando su estado según el resultado.
 - **`community_posts/utils/logger_util.py`**
-    - Configura y gestiona el registro de logs para monitorear los procesos y depurar errores.
+  - Configura y gestiona el registro de logs para monitorear los procesos y depurar errores.
 
 ### Archivos de Configuración
 
 - **`phs_main_django/settings.py`**
-    - Configuración principal de la aplicación Django.
-    - **Claves Importantes**:
-        - **`SECRET_KEY`**: Llave secreta de Django, se debe configurar con una variable de entorno.
-        - **`DEBUG`**: Define si el modo debug está activo; debe ser `False` en producción.
-        - **`ALLOWED_HOSTS`**: Lista de hosts permitidos; se debe configurar según el entorno.
-        - **`DATABASES`**: Configuración de la base de datos; utiliza las variables de entorno definidas.
-        - **`STATIC_URL`** y **`STATIC_ROOT`**: Configuración para servir archivos estáticos en producción con WhiteNoise.
-        - **`CELERY_BROKER_URL`**: URL del broker de mensajes; se configura para usar RabbitMQ.
+  - Configuración principal de la aplicación Django.
+  - **Claves Importantes**:
+    - **`SECRET_KEY`**: Llave secreta de Django, se debe configurar con una variable de entorno.
+    - **`DEBUG`**: Define si el modo debug está activo; debe ser `False` en producción.
+    - **`ALLOWED_HOSTS`**: Lista de hosts permitidos; se debe configurar según el entorno.
+    - **`DATABASES`**: Configuración de la base de datos; utiliza las variables de entorno definidas.
+    - **`STATIC_URL`** y **`STATIC_ROOT`**: Configuración para servir archivos estáticos en producción con WhiteNoise.
+    - **`CELERY_BROKER_URL`**: URL del broker de mensajes; se configura para usar RabbitMQ.
 - **`.env`**
-    - Archivo que contiene las variables de entorno utilizadas por el proyecto.
-    - **Variables Importantes**:
-        - **Base de Datos**:
-            - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
-        - **Django**:
-            - `DJANGO_SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD`, `DJANGO_SUPERUSER_EMAIL`
-        - **Celery**:
-            - `CELERY_BROKER_URL`
-        - **LearnWorlds API**:
-            - `LW_API_KEY`, `LW_SECRET_KEY`, `LW_USERNAME`, `LW_PASSWORD`
+  - Archivo que contiene las variables de entorno utilizadas por el proyecto.
+  - **Variables Importantes**:
+    - **Base de Datos**:
+      - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
+    - **Django**:
+      - `DJANGO_SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD`, `DJANGO_SUPERUSER_EMAIL`
+    - **Celery**:
+      - `CELERY_BROKER_URL`
+    - **LearnWorlds API**:
+      - `LW_API_KEY`, `LW_SECRET_KEY`, `LW_USERNAME`, `LW_PASSWORD`
 - **`docker-compose.yml`**
-    - Define los servicios de Docker que componen la aplicación.
-    - **Servicios**:
-        - **`web`**: Servicio de Django que utiliza Gunicorn.
-        - **`celery_worker`**: Servicio que ejecuta los workers de Celery.
-        - **`celery_beat`**: Servicio que programa las tareas periódicas con Celery Beat.
-        - **`db`**: Servicio de base de datos PostgreSQL.
-        - **`rabbitmq`**: Servicio de RabbitMQ para la cola de mensajes.
-    - **Puertos Mapeados**:
-        - **Web (Django)**: `8000:8000`
-        - **RabbitMQ**:
-            - **AMQP**: `5672:5672`
-            - **Management**: `15672:15672`
-        - **PostgreSQL**: `5432:5432`
+  - Define los servicios de Docker que componen la aplicación.
+  - **Servicios**:
+    - **`web`**: Servicio de Django que utiliza Gunicorn.
+    - **`celery_worker`**: Servicio que ejecuta los workers de Celery.
+    - **`celery_beat`**: Servicio que programa las tareas periódicas con Celery Beat.
+    - **`db`**: Servicio de base de datos PostgreSQL.
+    - **`rabbitmq`**: Servicio de RabbitMQ para la cola de mensajes.
+  - **Puertos Mapeados**:
+    - **Web (Django)**: `8000:8000`
+    - **RabbitMQ**:
+      - **AMQP**: `5672:5672`
+      - **Management**: `15672:15672`
+    - **PostgreSQL**: `5432:5432`
 - **`entrypoint.sh`**
-    - Script de entrada que se ejecuta al iniciar los contenedores.
-    - **Funciones**:
-        - Espera a que la base de datos esté lista antes de iniciar el servicio.
-        - Aplica migraciones de Django si corresponde.
-        - Crea el superusuario de Django si no existe.
-        - Ejecuta `collectstatic` para recopilar archivos estáticos.
-        - Inicia el servicio proporcionado (Gunicorn, Celery Worker o Celery Beat).
+  - Script de entrada que se ejecuta al iniciar los contenedores.
+  - **Funciones**:
+    - Espera a que la base de datos y RabbitMQ estén listos antes de iniciar el servicio.
+    - Aplica migraciones de Django si corresponde.
+    - Crea el superusuario de Django si no existe.
+    - Ejecuta `collectstatic` para recopilar archivos estáticos (solo en el contenedor `web`).
+    - Inicia el servicio proporcionado (Gunicorn, Celery Worker o Celery Beat).
 
 ---
 
@@ -108,8 +111,6 @@ A continuación, se detallan todos los puertos utilizados en el proyecto:
 - **5432**: Puerto utilizado por PostgreSQL.
 - **5672**: Puerto AMQP utilizado por RabbitMQ para la comunicación con Celery.
 - **15672**: Puerto de la interfaz de administración web de RabbitMQ.
-- **15692**: Puerto utilizado por RabbitMQ para métricas de Prometheus (no mapeado en `docker-compose.yml`, pero puede ser relevante si se habilitan métricas).
-- **6379**: Si se utiliza Redis en lugar de RabbitMQ (no en este caso), este sería el puerto por defecto.
 
 **Nota**: Asegúrate de que estos puertos estén libres en tu máquina local o servidor para evitar conflictos durante las pruebas y el despliegue.
 
@@ -121,7 +122,7 @@ Si deseas liberar los puertos mencionados que puedan estar en uso en tu sistema 
 #!/bin/bash
 
 # Lista de puertos a verificar
-PUERTOS=(8000 5432 5672 15672 15692)
+PUERTOS=(8000 5432 5672 15672)
 
 for PUERTO in "${PUERTOS[@]}"; do
   PID=$(sudo lsof -t -i :$PUERTO)
@@ -193,8 +194,30 @@ chmod +x liberar_puertos.sh
     
     ```
     
-3. **Agregar el Archivo de Configuración de RabbitMQ**
-    - Crea un archivo llamado `rabbitmq.conf` dentro del directorio `rabbitmq` con el contenido adecuado para configurar RabbitMQ según tus necesidades (si es necesario).
+3. **Agregar los Archivos de Configuración de RabbitMQ**
+    - Crea un archivo llamado `rabbitmq.conf` dentro del directorio `rabbitmq` con el siguiente contenido:
+        
+        ```
+        conf
+        Copy code
+        # rabbitmq/rabbitmq.conf
+        
+        # Deshabilitar características obsoletas
+        management.metrics_collection_interval = 0
+        deprecated_features.permit_transient_non_exclusive_queues = false
+        deprecated_features.permit_global_qos = false
+        
+        ```
+        
+    - Crea un archivo llamado `enabled_plugins` dentro del directorio `rabbitmq` con el siguiente contenido:
+        
+        ```erlang
+        erlang
+        Copy code
+        [rabbitmq_management].
+        
+        ```
+        
 4. **Crear y Configurar el Archivo `.env`**
     - Copia el archivo `.env.example` a `.env`:
         
@@ -287,8 +310,8 @@ docker-compose logs web
 
 Pasos para contribuir:
 
-1. Haz un fork del proyecto.
-2. Crea una nueva rama para tu característica o bugfix:
+1. **Haz un fork del proyecto.**
+2. **Crea una nueva rama para tu característica o corrección de errores:**
     
     ```
     sh
@@ -297,8 +320,17 @@ Pasos para contribuir:
     
     ```
     
-3. Realiza tus cambios y haz commits descriptivos.
-4. Envía tus cambios al repositorio remoto:
+3. **Realiza tus cambios y haz commits descriptivos:**
+    
+    ```
+    sh
+    Copy code
+    git add .
+    git commit -m "Agrega nueva funcionalidad XYZ"
+    
+    ```
+    
+4. **Envía tus cambios al repositorio remoto:**
     
     ```
     sh
@@ -307,7 +339,7 @@ Pasos para contribuir:
     
     ```
     
-5. Crea un pull request desde tu repositorio fork al repositorio original.
+5. **Crea un pull request desde tu repositorio fork al repositorio original.**
 
 ---
 
