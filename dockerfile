@@ -1,5 +1,3 @@
-# Dockerfile
-
 # Imagen base de Python
 FROM python:3.12-slim
 
@@ -12,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     bash \
     postgresql-client \
     gosu \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear un usuario y grupo no root
