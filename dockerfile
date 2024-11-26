@@ -12,24 +12,19 @@ RUN apt-get update && apt-get install -y \
     bash \
     postgresql-client \
     gosu \
-    chromium \
-    chromium-driver \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
+
+# Instalar Puppeteer
+RUN npm install -g puppeteer-extra puppeteer puppeteer-extra-plugin-stealth
 
 # Crear un usuario y grupo no root con directorio home
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --disabled-password appuser
 
 # Establecer el directorio home y permisos adecuados
-RUN mkdir -p /home/appuser/.cache/selenium && \
-    chown -R appuser:appgroup /home/appuser
-
-# Directorio de trabajo dentro del contenedor
 WORKDIR /app
-
-# Descargar Dockerize
-RUN wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz \
-    && rm dockerize-linux-amd64-v0.6.1.tar.gz
 
 # Copiar el archivo de requerimientos
 COPY requirements.txt /app/requirements.txt
