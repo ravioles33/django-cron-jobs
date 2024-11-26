@@ -1,6 +1,6 @@
-# community_posts/check_pending_posts.py
+# Ruta: community_posts/check_pending_posts.py
 
-from .utils.selenium_publish import execute_publish_script
+from .utils.puppeteer_publish import execute_publish_script
 from .utils.post_status_manager import update_post_status
 from .models import Post
 from django.utils import timezone

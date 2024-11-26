@@ -1,4 +1,4 @@
-# phs_main_django/celery.py
+# Ruta: phs_main_django/celery.py
 
 from __future__ import absolute_import, unicode_literals
 import os
@@ -23,7 +23,7 @@ def debug_task(self):
 
 app.conf.broker_connection_retry_on_startup = True
 
-###
+# Schedule actualizado para llamar al nuevo script
 from celery.schedules import crontab
 
 app.conf.beat_schedule = {

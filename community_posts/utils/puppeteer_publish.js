@@ -1,3 +1,5 @@
+// Ruta: community_posts/utils/puppeteer_publish.js
+
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 require('dotenv').config();
@@ -19,15 +21,14 @@ const login = async () => {
 
     try {
         await page.goto(loginPageUrl, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('#animatedModal', { visible: true });
-        await page.type('input.sign-input.-email-input[name="email"]', username);
-        await page.type('input.sign-input.-pass-input[name="password"]', password);
-        await page.click('div#submitLogin');
+        await page.type('input[name="email"]', username);
+        await page.type('input[name="password"]', password);
+        await page.click('button[type="submit"]');
         await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
         const csrfToken = await page.$eval(
             'meta[name="csrf-token"]',
-            (element) => element.content
+            element => element.content
         );
 
         return { browser, page, csrfToken };
@@ -38,44 +39,31 @@ const login = async () => {
     }
 };
 
-const postMessage = async (page, csrfToken, groupId, messageHtml) => {
-    const postUrl = 'https://go.producthackers.com/api/posts';
-
-    const headers = {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        'csrf-token': csrfToken,
-    };
-
-    const data = {
-        text: messageHtml,
-        group_id: groupId,
-    };
-
-    const response = await page.evaluate(
-        async ({ postUrl, headers, data }) => {
-            const response = await fetch(postUrl, {
+const executePublishScript = async (post, logger) => {
+    try {
+        const { browser, page, csrfToken } = await login();
+        const postUrl = 'https://go.producthackers.com/api/posts';
+        const response = await page.evaluate(async ({ postUrl, post, csrfToken }) => {
+            return await fetch(postUrl, {
                 method: 'POST',
-                headers,
-                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'csrf-token': csrfToken
+                },
+                body: JSON.stringify({
+                    text: post.content,
+                    group_id: post.community.community_id
+                })
             });
-            return response.status;
-        },
-        { postUrl, headers, data }
-    );
+        }, { postUrl, post, csrfToken });
 
-    return response;
+        logger.info('Post publicado:', response.status);
+        await browser.close();
+        return response.ok;
+    } catch (error) {
+        logger.error('Error publicando el post:', error);
+        return false;
+    }
 };
 
-(async () => {
-    try {
-        const groupId = 'your-group-id';
-        const messageHtml = '<p>Test message</p>';
-        const { browser, page, csrfToken } = await login();
-        await postMessage(page, csrfToken, groupId, messageHtml);
-        console.log('Message posted successfully');
-        await browser.close();
-    } catch (error) {
-        console.error('Error:', error);
-    }
-})();
+module.exports = { executePublishScript };
