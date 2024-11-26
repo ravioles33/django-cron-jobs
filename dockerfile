@@ -17,7 +17,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Puppeteer
+# Instalar Dockerize si no está ya presente
+RUN if ! command -v dockerize &> /dev/null; then \
+    wget -qO /usr/local/bin/dockerize https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64 || \
+    (echo "wget failed, trying curl" && curl -fsSL https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64 -o /usr/local/bin/dockerize); \
+    chmod +x /usr/local/bin/dockerize; \
+    fi
+
+# Instalar Puppeteer y plugins
 RUN npm install -g puppeteer-extra puppeteer puppeteer-extra-plugin-stealth
 
 # Crear un usuario y grupo no root con directorio home
