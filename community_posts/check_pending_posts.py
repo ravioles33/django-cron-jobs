@@ -1,6 +1,7 @@
-# community_posts/check_pending_posts.py
+# Ruta: community_posts/check_pending_posts.py
 
 import subprocess
+import json
 from .utils.post_status_manager import update_post_status
 from .models import Post
 from django.utils import timezone
@@ -19,9 +20,10 @@ def execute_publish_script(post, logger):
 
         # Ejecutar el archivo puppeteer_publish.js como un proceso externo
         result = subprocess.run(
-            ['node', 'community_posts/utils/puppeteer_publish.js', str(post_data)],
-            capture_output=True,
-            text=True
+            ['node', 'community_posts/utils/puppeteer_publish.js'],
+            input=json.dumps(post_data),
+            text=True,
+            capture_output=True
         )
 
         # Registrar la salida del script
@@ -36,10 +38,16 @@ def execute_publish_script(post, logger):
         return False
 
 def check_pending_posts():
+    """
+    Revisa y procesa los posts pendientes.
+    """
     logger = setup_logger("check_pending_posts")
 
     now = timezone.now()
-    pending_posts = Post.objects.filter(status__in=['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4'], scheduled_time__lte=now)
+    pending_posts = Post.objects.filter(
+        status__in=['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4'],
+        scheduled_time__lte=now
+    )
 
     for post in pending_posts:
         try:

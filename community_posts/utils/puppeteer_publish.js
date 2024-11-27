@@ -1,69 +1,59 @@
 // community_posts/utils/puppeteer_publish.js
 
-// Importar dependencias
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const dotenv = require('dotenv');
-const fs = require('fs');
-
-// Cargar configuración desde el archivo .env
-dotenv.config();
-
-// Habilitar el plugin stealth para evitar detección
+require("dotenv").config(); // Cargar variables de entorno
+const puppeteer = require("puppeteer-extra");
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 puppeteer.use(StealthPlugin());
 
-// Verificar que las credenciales estén configuradas
-if (!process.env.LW_USERNAME || !process.env.LW_PASSWORD) {
-    console.error("Error: Las credenciales de LW no están configuradas en el archivo .env");
-    process.exit(1);
-}
+const fs = require("fs");
 
-// Recibir datos del post desde el argumento del proceso
-const postData = JSON.parse(process.argv[2]);
+async function main() {
+    let postData;
 
-(async () => {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
+    // Leer datos de la entrada estándar si están disponibles
+    try {
+        const input = fs.readFileSync(0, "utf-8");
+        postData = JSON.parse(input);
+    } catch (err) {
+        console.error("Error al leer los datos de entrada: ", err.message);
+        return;
+    }
+
+    const { community_id, content } = postData;
+
+    if (!community_id || !content) {
+        console.error("Faltan datos requeridos: community_id o content.");
+        return;
+    }
+
+    const username = process.env.LW_USERNAME;
+    const password = process.env.LW_PASSWORD;
+
+    if (!username || !password) {
+        console.error("Credenciales faltantes en las variables de entorno.");
+        return;
+    }
 
     try {
-        // Iniciar sesión en LW
-        console.log("Iniciando sesión en LW...");
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
 
-        await page.goto('https://login.lw.com', { waitUntil: 'networkidle2' });
+        await page.goto("https://example-login-page.com/login", { waitUntil: "networkidle0" });
+        await page.type("#username", username);
+        await page.type("#password", password);
+        await page.click("#loginButton");
 
-        await page.type('#username', process.env.LW_USERNAME, { delay: 100 });
-        await page.type('#password', process.env.LW_PASSWORD, { delay: 100 });
+        await page.waitForNavigation();
 
-        await Promise.all([
-            page.click('#login-button'),
-            page.waitForNavigation({ waitUntil: 'networkidle2' })
-        ]);
+        await page.goto(`https://example-community.com/${community_id}/post`, { waitUntil: "networkidle0" });
+        await page.type("#postContent", content);
+        await page.click("#submitPost");
 
-        console.log("Inicio de sesión exitoso.");
-
-        // Navegar a la comunidad especificada
-        console.log(`Navegando a la comunidad: ${postData.community_id}`);
-        await page.goto(`https://lw.com/community/${postData.community_id}`, { waitUntil: 'networkidle2' });
-
-        // Publicar el contenido
-        console.log("Publicando contenido...");
-        await page.type('#post-content', postData.content, { delay: 50 });
-
-        // Enviar el post
-        await Promise.all([
-            page.click('#submit-post-button'),
-            page.waitForNavigation({ waitUntil: 'networkidle2' })
-        ]);
-
-        console.log("Publicación exitosa.");
-        process.exit(0); // Salida exitosa
-    } catch (error) {
-        console.error("Error al publicar:", error);
-        process.exit(1); // Salida con error
-    } finally {
+        console.log("Post publicado con éxito.");
         await browser.close();
+    } catch (err) {
+        console.error("Error durante la ejecución: ", err.message);
     }
-})();
+}
+
+main();

@@ -4,14 +4,18 @@
   "description": "Integración de Puppeteer con Django",
   "main": "puppeteer_publish.js",
   "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node community_posts/utils/puppeteer_publish.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-      "puppeteer": "^21.3.8",
-      "puppeteer-extra": "^3.3.4",
-      "puppeteer-extra-plugin-stealth": "^2.11.1",
-      "dotenv": "^16.3.1"
+    "puppeteer": "^22.8.2",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
