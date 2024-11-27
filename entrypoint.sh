@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# entrypoint.sh
+
 # Establecer el directorio home para appuser
 export HOME=/home/appuser
 
@@ -37,10 +39,6 @@ else:
     print('El superusuario ya existe.')
 EOF
 fi
-
-# Instalar dependencias Node.js
-echo "Instalando dependencias Node.js..."
-npm install
 
 if [ "$RUN_COLLECTSTATIC" = "true" ]; then
     # Ajustar permisos de /app/staticfiles

@@ -15,8 +15,8 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      NODE_PATH: "/usr/lib/node_modules"
-      PATH: "/usr/lib/node_modules:$PATH"
+      #NODE_PATH: "/usr/lib/node_modules"
+      #PATH: "/usr/lib/node_modules:$PATH"
       RUN_MIGRATIONS: "true"
       RUN_COLLECTSTATIC: "true"
       DB_HOST: db

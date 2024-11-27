@@ -1,4 +1,4 @@
-# Ruta: community_posts/check_pending_posts.py
+# community_posts/check_pending_posts.py
 
 import subprocess
 import json

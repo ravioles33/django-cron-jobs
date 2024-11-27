@@ -4,7 +4,6 @@
   "description": "Integración de Puppeteer con Django",
   "main": "puppeteer_publish.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node community_posts/utils/puppeteer_publish.js"
   },
   "author": "",
@@ -16,6 +15,6 @@
     "dotenv": "^16.3.1"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
