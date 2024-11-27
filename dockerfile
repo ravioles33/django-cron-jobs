@@ -56,6 +56,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+# Establecer variable de entorno para asegurar que Puppeteer descargue Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
+
 # Instalar Dockerize si no está ya presente
 RUN if ! command -v dockerize &> /dev/null; then \
     wget -qO /usr/local/bin/dockerize https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64 || \
@@ -79,14 +82,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 
-# Instalar las dependencias de Node.js
-RUN npm install
+# Instalar las dependencias de Node.js y forzar la descarga de Chromium
+RUN npm install --unsafe-perm=true
 
 # Copiar el resto del código al contenedor
 COPY . /app
 
 # Ajustar permisos para el usuario appuser
 RUN chown -R appuser:appgroup /app
+
+# Cambiar al usuario appuser
+USER appuser
 
 # Copiar el script de entrada y hacerlo ejecutable
 COPY entrypoint.sh /app/entrypoint.sh

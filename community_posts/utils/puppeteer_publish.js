@@ -1,9 +1,8 @@
-// community_posts/utils/puppeteer_publish.js
-
 require("dotenv").config();
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const fs = require("fs");
+const path = require("path");
 
 puppeteer.use(StealthPlugin());
 
@@ -35,9 +34,21 @@ async function main() {
     }
 
     try {
+        console.log("Iniciando Puppeteer...");
         const browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions',
+            ],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
         });
 
         const page = await browser.newPage();
@@ -83,10 +94,19 @@ async function main() {
         };
 
         const data = {
+            attachments: [],
+            best_of: null,
+            comments: [],
+            context: null,
+            likes: null,
+            social_object: { type: null, data: null },
+            social_items: [],
             text: content,
-            group_id: community_id
+            text_mentions: [],
+            group_id: community_id,
         };
 
+        console.log("Enviando solicitud POST para publicar el mensaje...");
         const response = await page.evaluate(
             async ({ postUrl, headers, data }) => {
                 const res = await fetch(postUrl, {
@@ -112,7 +132,7 @@ async function main() {
             process.exit(1);
         }
     } catch (err) {
-        console.error("Error durante la ejecución:", err.message);
+        console.error("Error durante la ejecución:", err.stack);
         process.exit(1);
     }
 }

@@ -28,7 +28,8 @@ def execute_publish_script(post, logger):
 
         # Registrar la salida del script
         logger.info(f"Puppeteer script output: {result.stdout}")
-        logger.error(f"Puppeteer script error output: {result.stderr}")
+        if result.stderr:
+            logger.error(f"Puppeteer script error output: {result.stderr}")
 
         if result.returncode == 0:
             return True
