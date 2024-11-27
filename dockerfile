@@ -24,9 +24,6 @@ RUN if ! command -v dockerize &> /dev/null; then \
     chmod +x /usr/local/bin/dockerize; \
     fi
 
-# Instalar Puppeteer y plugins
-RUN npm install -g puppeteer-extra puppeteer puppeteer-extra-plugin-stealth
-
 # Crear un usuario y grupo no root con directorio home
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --disabled-password appuser
 
@@ -38,6 +35,13 @@ COPY requirements.txt /app/requirements.txt
 
 # Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el archivo de dependencias Node.js
+COPY package.json /app/package.json
+COPY package-lock.json /app/package-lock.json
+
+# Instalar las dependencias de Node.js
+RUN npm install
 
 # Copiar el resto del código al contenedor
 COPY . /app

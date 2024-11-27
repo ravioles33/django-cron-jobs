@@ -38,6 +38,10 @@ else:
 EOF
 fi
 
+# Instalar dependencias Node.js
+echo "Instalando dependencias Node.js..."
+npm install
+
 if [ "$RUN_COLLECTSTATIC" = "true" ]; then
     # Ajustar permisos de /app/staticfiles
     echo "Ajustando permisos de /app/staticfiles..."
