@@ -91,12 +91,12 @@ COPY . /app
 # Ajustar permisos para el usuario appuser
 RUN chown -R appuser:appgroup /app
 
-# Cambiar al usuario appuser
-USER appuser
-
 # Copiar el script de entrada y hacerlo ejecutable
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+
+# Cambiar al usuario appuser
+USER appuser
 
 # Exponer el puerto
 EXPOSE 8000
