@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# entrypoint.sh
+
 # Establecer el directorio home para appuser
 export HOME=/home/appuser
 
@@ -43,11 +45,11 @@ if [ "$RUN_COLLECTSTATIC" = "true" ]; then
     echo "Ajustando permisos de /app/staticfiles..."
     chown -R appuser:appgroup /app/staticfiles
 
-    # Ejecutar collectstatic como appuser
+    # Ejecutar collectstatic
     echo "Recopilando archivos estáticos..."
-    gosu appuser python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput
 fi
 
-# Ejecutar el comando proporcionado como appuser
+# Ejecutar el comando proporcionado
 echo "Iniciando el servicio con el comando: $@"
-exec gosu appuser "$@"
+exec "$@"
