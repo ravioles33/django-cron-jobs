@@ -20,10 +20,11 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libcups2 \
     libdbus-1-3 \
+    libdrm2 \
+    libdrm-dev \
     libexpat1 \
     libfontconfig1 \
-    libgcc1 \
-    libgdk-pixbuf2.0-0 \
+    libgbm-dev \
     libglib2.0-0 \
     libgtk-3-0 \
     libnspr4 \
@@ -42,8 +43,11 @@ RUN apt-get update && apt-get install -y \
     libxi6 \
     libxrandr2 \
     libxrender1 \
+    libxshmfence1 \
     libxss1 \
     libxtst6 \
+    libegl1 \
+    libgles2 \
     lsb-release \
     xdg-utils \
     --no-install-recommends \
@@ -76,24 +80,27 @@ COPY requirements.txt /app/requirements.txt
 # Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar archivos de dependencias Node.js
-COPY package.json /app/package.json
-COPY package-lock.json /app/package-lock.json
-
-# Instalar las dependencias de Node.js y forzar la descarga de Chromium
-RUN npm install --unsafe-perm=true
-
-# Copiar el resto del código al contenedor
-COPY . /app
-
-# Ajustar permisos para el usuario appuser
+# Cambiar la propiedad de /app a appuser
 RUN chown -R appuser:appgroup /app
-
-# Copiar el script de entrada y hacerlo ejecutable
-RUN chmod +x /app/entrypoint.sh
 
 # Cambiar al usuario appuser
 USER appuser
+
+# Crear el directorio de caché de Puppeteer y establecer permisos
+RUN mkdir -p /home/appuser/.cache/puppeteer
+
+# Copiar archivos de dependencias Node.js
+COPY --chown=appuser:appgroup package.json /app/package.json
+COPY --chown=appuser:appgroup package-lock.json /app/package-lock.json
+
+# Instalar las dependencias de Node.js y forzar la descarga de Chromium
+RUN npm install
+
+# Copiar el resto del código al contenedor
+COPY --chown=appuser:appgroup . /app
+
+# Asegurarse de que el script de entrada sea ejecutable
+RUN chmod +x /app/entrypoint.sh
 
 # Exponer el puerto
 EXPOSE 8000
