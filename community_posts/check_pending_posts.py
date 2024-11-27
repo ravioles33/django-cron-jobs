@@ -27,15 +27,17 @@ def execute_publish_script(post, logger):
         )
 
         # Registrar la salida del script
+        logger.info(f"Puppeteer script output: {result.stdout}")
+        logger.error(f"Puppeteer script error output: {result.stderr}")
+
         if result.returncode == 0:
-            logger.info(f"Puppeteer script output: {result.stdout}")
             return True
         else:
-            logger.error(f"Puppeteer script error: {result.stderr}")
             return False
     except Exception as e:
         logger.error(f"Error al ejecutar Puppeteer script: {str(e)}")
         return False
+
 
 def check_pending_posts():
     """

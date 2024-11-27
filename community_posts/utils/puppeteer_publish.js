@@ -1,29 +1,29 @@
 // community_posts/utils/puppeteer_publish.js
 
-require("dotenv").config(); // Cargar variables de entorno
+require("dotenv").config();
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-
 const fs = require("fs");
+
+puppeteer.use(StealthPlugin());
 
 async function main() {
     let postData;
 
-    // Leer datos de la entrada estándar si están disponibles
+    // Leer datos de la entrada estándar
     try {
         const input = fs.readFileSync(0, "utf-8");
         postData = JSON.parse(input);
     } catch (err) {
         console.error("Error al leer los datos de entrada: ", err.message);
-        return;
+        process.exit(1);
     }
 
     const { community_id, content } = postData;
 
     if (!community_id || !content) {
         console.error("Faltan datos requeridos: community_id o content.");
-        return;
+        process.exit(1);
     }
 
     const username = process.env.LW_USERNAME;
@@ -31,12 +31,12 @@ async function main() {
 
     if (!username || !password) {
         console.error("Credenciales faltantes en las variables de entorno.");
-        return;
+        process.exit(1);
     }
 
     try {
         const browser = await puppeteer.launch({
-            headless: true, // Cambiar a false para debugging
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
@@ -44,16 +44,17 @@ async function main() {
         await page.setViewport({ width: 1920, height: 1080 });
 
         // Navegar a la página de inicio de sesión
-        const loginPageUrl = "https://go.producthackers.com/?msg=not-logged-in";
         console.log("Navegando a la página de inicio de sesión...");
-        await page.goto(loginPageUrl, { waitUntil: "networkidle2" });
+        await page.goto("https://go.producthackers.com/?msg=not-logged-in", { waitUntil: "networkidle2" });
 
         // Aceptar cookies si el banner está presente
         try {
-            await page.waitForSelector('button:contains("¡Entendido!")', { timeout: 5000 });
-            await page.click('button:contains("¡Entendido!")');
-            console.log("Banner de cookies aceptado.");
-        } catch {
+            const [cookieButton] = await page.$x("//button[contains(text(),'¡Entendido!')]");
+            if (cookieButton) {
+                await cookieButton.click();
+                console.log("Banner de cookies aceptado.");
+            }
+        } catch (err) {
             console.log("No se detectó el banner de cookies.");
         }
 
@@ -67,10 +68,7 @@ async function main() {
         console.log("Inicio de sesión exitoso.");
 
         // Obtener el token CSRF
-        const csrfToken = await page.$eval(
-            'meta[name="csrf-token"]',
-            (element) => element.content
-        );
+        const csrfToken = await page.$eval('meta[name="csrf-token"]', (el) => el.content);
         console.log("Token CSRF obtenido:", csrfToken);
 
         // Publicar el mensaje
@@ -81,7 +79,7 @@ async function main() {
             "csrf-token": csrfToken,
             origin: "https://go.producthackers.com",
             referer: `https://go.producthackers.com/author/social/channel/${community_id}`,
-            "user-agent": await page.evaluate(() => navigator.userAgent)
+            "user-agent": await page.evaluate(() => navigator.userAgent),
         };
 
         const data = {
@@ -91,31 +89,31 @@ async function main() {
 
         const response = await page.evaluate(
             async ({ postUrl, headers, data }) => {
-                const response = await fetch(postUrl, {
+                const res = await fetch(postUrl, {
                     method: "POST",
                     headers,
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
                 });
-                return {
-                    status: response.status,
-                    text: await response.text()
-                };
+                return { status: res.status, body: await res.text() };
             },
             { postUrl, headers, data }
         );
 
         console.log("Código de estado:", response.status);
-        console.log("Respuesta:", response.text);
+        console.log("Respuesta del servidor:", response.body);
 
         if (response.status === 200) {
             console.log("Publicación exitosa.");
+            await browser.close();
+            process.exit(0);
         } else {
-            console.error("Error al publicar:", response.text);
+            console.error("Error al publicar:", response.body);
+            await browser.close();
+            process.exit(1);
         }
-
-        await browser.close();
     } catch (err) {
         console.error("Error durante la ejecución:", err.message);
+        process.exit(1);
     }
 }
 
