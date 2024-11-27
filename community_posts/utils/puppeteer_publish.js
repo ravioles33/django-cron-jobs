@@ -35,24 +35,87 @@ async function main() {
     }
 
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({
+            headless: true, // Cambiar a false para debugging
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
         const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
 
-        await page.goto("https://example-login-page.com/login", { waitUntil: "networkidle0" });
-        await page.type("#username", username);
-        await page.type("#password", password);
-        await page.click("#loginButton");
+        // Navegar a la página de inicio de sesión
+        const loginPageUrl = "https://go.producthackers.com/?msg=not-logged-in";
+        console.log("Navegando a la página de inicio de sesión...");
+        await page.goto(loginPageUrl, { waitUntil: "networkidle2" });
 
-        await page.waitForNavigation();
+        // Aceptar cookies si el banner está presente
+        try {
+            await page.waitForSelector('button:contains("¡Entendido!")', { timeout: 5000 });
+            await page.click('button:contains("¡Entendido!")');
+            console.log("Banner de cookies aceptado.");
+        } catch {
+            console.log("No se detectó el banner de cookies.");
+        }
 
-        await page.goto(`https://example-community.com/${community_id}/post`, { waitUntil: "networkidle0" });
-        await page.type("#postContent", content);
-        await page.click("#submitPost");
+        // Iniciar sesión
+        console.log("Iniciando sesión...");
+        await page.waitForSelector("#animatedModal", { visible: true });
+        await page.type('input.sign-input.-email-input[name="email"]', username);
+        await page.type('input.sign-input.-pass-input[name="password"]', password);
+        await page.click('div#submitLogin');
+        await page.waitForNavigation({ waitUntil: "networkidle2" });
+        console.log("Inicio de sesión exitoso.");
 
-        console.log("Post publicado con éxito.");
+        // Obtener el token CSRF
+        const csrfToken = await page.$eval(
+            'meta[name="csrf-token"]',
+            (element) => element.content
+        );
+        console.log("Token CSRF obtenido:", csrfToken);
+
+        // Publicar el mensaje
+        const postUrl = "https://go.producthackers.com/api/posts";
+        const headers = {
+            accept: "application/json",
+            "content-type": "application/json",
+            "csrf-token": csrfToken,
+            origin: "https://go.producthackers.com",
+            referer: `https://go.producthackers.com/author/social/channel/${community_id}`,
+            "user-agent": await page.evaluate(() => navigator.userAgent)
+        };
+
+        const data = {
+            text: content,
+            group_id: community_id
+        };
+
+        const response = await page.evaluate(
+            async ({ postUrl, headers, data }) => {
+                const response = await fetch(postUrl, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(data)
+                });
+                return {
+                    status: response.status,
+                    text: await response.text()
+                };
+            },
+            { postUrl, headers, data }
+        );
+
+        console.log("Código de estado:", response.status);
+        console.log("Respuesta:", response.text);
+
+        if (response.status === 200) {
+            console.log("Publicación exitosa.");
+        } else {
+            console.error("Error al publicar:", response.text);
+        }
+
         await browser.close();
     } catch (err) {
-        console.error("Error durante la ejecución: ", err.message);
+        console.error("Error durante la ejecución:", err.message);
     }
 }
 

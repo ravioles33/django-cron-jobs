@@ -40,5 +40,3 @@ wcwidth==0.2.13
 websocket-client==1.8.0
 wsproto==1.2.0
 whitenoise==6.8.2
-puppeteer-extra==3.3.4
-puppeteer-extra-plugin-stealth==2.11.1
