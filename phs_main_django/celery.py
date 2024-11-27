@@ -23,7 +23,6 @@ def debug_task(self):
 
 app.conf.broker_connection_retry_on_startup = True
 
-###
 from celery.schedules import crontab
 
 app.conf.beat_schedule = {

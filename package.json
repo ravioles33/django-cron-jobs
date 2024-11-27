@@ -1,0 +1,20 @@
+{
+  "name": "django-cron-jobs",
+  "version": "1.0.0",
+  "description": "Integración de Puppeteer con Django",
+  "main": "puppeteer_publish.js",
+  "scripts": {
+    "start": "node community_posts/utils/puppeteer_publish.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^22.8.2",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
