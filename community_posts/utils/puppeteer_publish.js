@@ -1,69 +1,69 @@
-// Ruta: community_posts/utils/puppeteer_publish.js
+// community_posts/utils/puppeteer_publish.js
 
+// Importar dependencias
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const fs = require('fs');
 
+// Cargar configuración desde el archivo .env
+dotenv.config();
+
+// Habilitar el plugin stealth para evitar detección
 puppeteer.use(StealthPlugin());
 
-const login = async () => {
-    const loginPageUrl = 'https://go.producthackers.com/?msg=not-logged-in';
-    const username = process.env.LW_USERNAME;
-    const password = process.env.LW_PASSWORD;
+// Verificar que las credenciales estén configuradas
+if (!process.env.LW_USERNAME || !process.env.LW_PASSWORD) {
+    console.error("Error: Las credenciales de LW no están configuradas en el archivo .env");
+    process.exit(1);
+}
 
+// Recibir datos del post desde el argumento del proceso
+const postData = JSON.parse(process.argv[2]);
+
+(async () => {
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
 
     try {
-        await page.goto(loginPageUrl, { waitUntil: 'networkidle2' });
-        await page.type('input[name="email"]', username);
-        await page.type('input[name="password"]', password);
-        await page.click('button[type="submit"]');
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Iniciar sesión en LW
+        console.log("Iniciando sesión en LW...");
 
-        const csrfToken = await page.$eval(
-            'meta[name="csrf-token"]',
-            element => element.content
-        );
+        await page.goto('https://login.lw.com', { waitUntil: 'networkidle2' });
 
-        return { browser, page, csrfToken };
+        await page.type('#username', process.env.LW_USERNAME, { delay: 100 });
+        await page.type('#password', process.env.LW_PASSWORD, { delay: 100 });
+
+        await Promise.all([
+            page.click('#login-button'),
+            page.waitForNavigation({ waitUntil: 'networkidle2' })
+        ]);
+
+        console.log("Inicio de sesión exitoso.");
+
+        // Navegar a la comunidad especificada
+        console.log(`Navegando a la comunidad: ${postData.community_id}`);
+        await page.goto(`https://lw.com/community/${postData.community_id}`, { waitUntil: 'networkidle2' });
+
+        // Publicar el contenido
+        console.log("Publicando contenido...");
+        await page.type('#post-content', postData.content, { delay: 50 });
+
+        // Enviar el post
+        await Promise.all([
+            page.click('#submit-post-button'),
+            page.waitForNavigation({ waitUntil: 'networkidle2' })
+        ]);
+
+        console.log("Publicación exitosa.");
+        process.exit(0); // Salida exitosa
     } catch (error) {
-        console.error('Error during login:', error);
+        console.error("Error al publicar:", error);
+        process.exit(1); // Salida con error
+    } finally {
         await browser.close();
-        throw error;
     }
-};
-
-const executePublishScript = async (post, logger) => {
-    try {
-        const { browser, page, csrfToken } = await login();
-        const postUrl = 'https://go.producthackers.com/api/posts';
-        const response = await page.evaluate(async ({ postUrl, post, csrfToken }) => {
-            return await fetch(postUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'csrf-token': csrfToken
-                },
-                body: JSON.stringify({
-                    text: post.content,
-                    group_id: post.community.community_id
-                })
-            });
-        }, { postUrl, post, csrfToken });
-
-        logger.info('Post publicado:', response.status);
-        await browser.close();
-        return response.ok;
-    } catch (error) {
-        logger.error('Error publicando el post:', error);
-        return false;
-    }
-};
-
-module.exports = { executePublishScript };
+})();
