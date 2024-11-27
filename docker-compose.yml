@@ -15,8 +15,6 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      #NODE_PATH: "/usr/lib/node_modules"
-      #PATH: "/usr/lib/node_modules:$PATH"
       RUN_MIGRATIONS: "true"
       RUN_COLLECTSTATIC: "true"
       DB_HOST: db
@@ -119,7 +117,7 @@ services:
       - "5432:5432"
 
   rabbitmq:
-    image: rabbitmq:4.0.3-management
+    image: rabbitmq:3-management
     container_name: django-cron-jobs-rabbitmq
     ports:
       - "5672:5672"

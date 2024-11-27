@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     bash \
     postgresql-client \
-    gosu \
     curl \
     ca-certificates \
     fonts-liberation \
@@ -24,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     libexpat1 \
     libfontconfig1 \
     libgcc1 \
-    libgconf-2-4 \
     libgdk-pixbuf2.0-0 \
     libglib2.0-0 \
     libgtk-3-0 \
@@ -92,7 +90,6 @@ COPY . /app
 RUN chown -R appuser:appgroup /app
 
 # Copiar el script de entrada y hacerlo ejecutable
-COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Cambiar al usuario appuser
