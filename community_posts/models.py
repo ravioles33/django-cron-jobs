@@ -35,12 +35,13 @@ class Post(models.Model):
             raise ValidationError('La fecha y hora de publicación no pueden estar en el pasado.')
 
     def save(self, *args, **kwargs):
-        # Forzar estado a 'pending' si el autor no es superusuario
-        if not self.author.is_superuser:
+        # Forzar estado a 'pending' solo al crear el post si el autor no es superusuario
+        if not self.author.is_superuser and not self.pk:
             self.status = 'pending'
         # Llamar a clean() para realizar la validación antes de guardar
         self.full_clean()
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"Post to {self.community.name} at {self.scheduled_time} - Status: {self.status}"
