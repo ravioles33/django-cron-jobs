@@ -1,20 +1,20 @@
 from django.contrib import admin
 from .models import Community, Post
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 import pytz
-from datetime import datetime
 
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('community', 'content', 'status', 'scheduled_time')
-    readonly_fields = ('scheduled_time_info',)
+    list_display = ('community', 'content', 'status', 'scheduled_time', 'author')
+    readonly_fields = ('scheduled_time_info', 'author')
 
     def scheduled_time_info(self, obj=None):
-        # Obtén las horas en Buenos Aires y Madrid con información de la zona horaria
+        # Obtener las horas en Buenos Aires y Madrid con información de la zona horaria
         buenos_aires_tz = pytz.timezone('America/Argentina/Buenos_Aires')
         madrid_tz = pytz.timezone('Europe/Madrid')
 
-        buenos_aires_time = datetime.now(buenos_aires_tz)
-        madrid_time = datetime.now(madrid_tz)
+        buenos_aires_time = timezone.now().astimezone(buenos_aires_tz)
+        madrid_time = timezone.now().astimezone(madrid_tz)
 
         buenos_aires_time_str = buenos_aires_time.strftime('%Y-%m-%d %H:%M:%S')
         madrid_time_str = madrid_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -32,6 +32,18 @@ class PostAdmin(admin.ModelAdmin):
         return mark_safe(message)
 
     scheduled_time_info.short_description = "Información sobre las zonas horarias"
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if not request.user.is_superuser:
+            readonly_fields += ['status']
+        return readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        # Asignar el autor al post
+        if not obj.pk:
+            obj.author = request.user
+        super().save_model(request, obj, form, change)
 
 admin.site.register(Community)
 admin.site.register(Post, PostAdmin)

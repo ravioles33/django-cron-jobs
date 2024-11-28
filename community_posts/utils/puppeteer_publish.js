@@ -17,18 +17,15 @@ async function main() {
         process.exit(1);
     }
 
-    const { community_id, content } = postData;
+    const { community_id, content, lw_username, lw_password } = postData;
 
     if (!community_id || !content) {
         console.error("Faltan datos requeridos: community_id o content.");
         process.exit(1);
     }
 
-    const username = process.env.LW_USERNAME;
-    const password = process.env.LW_PASSWORD;
-
-    if (!username || !password) {
-        console.error("Credenciales faltantes en las variables de entorno.");
+    if (!lw_username || !lw_password) {
+        console.error("Credenciales de LW faltantes.");
         process.exit(1);
     }
 
@@ -71,11 +68,13 @@ async function main() {
         // Iniciar sesión
         console.log("Iniciando sesión...");
         await page.waitForSelector("#animatedModal", { visible: true });
-        await page.type('input.sign-input.-email-input[name="email"]', username);
-        await page.type('input.sign-input.-pass-input[name="password"]', password);
+        await page.type('input.sign-input.-email-input[name="email"]', lw_username);
+        await page.type('input.sign-input.-pass-input[name="password"]', lw_password);
         await page.click('div#submitLogin');
         await page.waitForNavigation({ waitUntil: "networkidle2" });
         console.log("Inicio de sesión exitoso.");
+
+        // Continuar con el resto del script...
 
         // Obtener el token CSRF
         const csrfToken = await page.$eval('meta[name="csrf-token"]', (el) => el.content);
@@ -132,6 +131,7 @@ async function main() {
         }
     } catch (err) {
         console.error("Error durante la ejecución:", err.stack);
+        await browser.close();
         process.exit(1);
     }
 }

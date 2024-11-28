@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class Community(models.Model):
     name = models.CharField(max_length=255)
@@ -13,27 +14,29 @@ class Post(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pendiente'),
         ('published', 'Publicado'),
-        ('error', 'Error'),
-        ('error-1', 'Error - Intento 1'),
-        ('error-2', 'Error - Intento 2'),
-        ('error-3', 'Error - Intento 3'),
-        ('error-4', 'Error - Intento 4'),
-        ('error-5', 'Error - Intento 5'),
-        ('error-00', 'Error - Sin reintentos disponibles')
+        ('error-1', 'Error - Reintento 1'),
+        ('error-2', 'Error - Reintento 2'),
+        ('error-3', 'Error - Reintento 3'),
+        ('error-4', 'Error - Reintento 4'),
+        ('error-5', 'Error final - Sin reintentos disponibles')
     ]
 
     community = models.ForeignKey(Community, on_delete=models.CASCADE)
     content = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     scheduled_time = models.DateTimeField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def clean(self):
-        # Asegúrate de que la hora de publicación no esté en el pasado solo si el estado es 'pending'
+        # Validar que la hora de publicación no esté en el pasado si el estado es 'pending'
         if self.status == 'pending' and self.scheduled_time < timezone.now():
             raise ValidationError('La fecha y hora de publicación no pueden estar en el pasado.')
 
     def save(self, *args, **kwargs):
-        # Llama a clean() para realizar la validación antes de guardar
+        # Forzar estado a 'pending' si el autor no es superusuario
+        if not self.author.is_superuser:
+            self.status = 'pending'
+        # Llamar a clean() para realizar la validación antes de guardar
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -41,10 +44,11 @@ class Post(models.Model):
         return f"Post to {self.community.name} at {self.scheduled_time} - Status: {self.status}"
 
     def retry_publication(self):
-        if self.status.startswith('error') and self.status != 'error-00':
-            current_attempt = int(self.status.split('-')[-1]) if '-' in self.status else 0
-            if current_attempt < 5:
+        error_statuses = ['error-1', 'error-2', 'error-3', 'error-4']
+        if self.status in error_statuses:
+            current_attempt = int(self.status.split('-')[-1])
+            if current_attempt < 4:
                 self.status = f'error-{current_attempt + 1}'
             else:
-                self.status = 'error-00'
+                self.status = 'error-5'
             self.save()
