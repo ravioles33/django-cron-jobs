@@ -1,3 +1,5 @@
+# community_posts/check_pending_posts.py
+
 import subprocess
 import json
 from .utils.post_status_manager import update_post_status

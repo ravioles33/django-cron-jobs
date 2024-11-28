@@ -1,3 +1,5 @@
+// community_posts/utils/puppeteer_publish.js
+
 require("dotenv").config();
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
@@ -73,8 +75,6 @@ async function main() {
         await page.click('div#submitLogin');
         await page.waitForNavigation({ waitUntil: "networkidle2" });
         console.log("Inicio de sesión exitoso.");
-
-        // Continuar con el resto del script...
 
         // Obtener el token CSRF
         const csrfToken = await page.$eval('meta[name="csrf-token"]', (el) => el.content);

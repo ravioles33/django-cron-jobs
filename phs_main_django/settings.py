@@ -9,6 +9,10 @@ load_dotenv()
 LW_API_KEY = os.getenv('LW_API_KEY')
 LW_SECRET_KEY = os.getenv('LW_SECRET_KEY')
 
+# Agregar LW_USERNAME y LW_PASSWORD
+LW_USERNAME = os.getenv('LW_USERNAME')
+LW_PASSWORD = os.getenv('LW_PASSWORD')
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
@@ -54,6 +58,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Añade aquí cualquier otro context processor que necesites
             ],
         },
     },
@@ -79,12 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    # Añade aquí otros validadores si los necesitas
 ]
 
 LANGUAGE_CODE = 'en-us'
