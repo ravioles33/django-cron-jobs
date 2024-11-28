@@ -3,7 +3,7 @@ services:
     build: .
     container_name: django-cron-jobs-web
     entrypoint: ["/app/entrypoint.sh"]
-    command: ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]
+    command: ["gunicorn", "--bind", ":8000", "--timeout", "120", "phs_main_django.wsgi:application"]
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
