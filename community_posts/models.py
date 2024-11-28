@@ -42,7 +42,6 @@ class Post(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-
     def __str__(self):
         return f"Post to {self.community.name} at {self.scheduled_time} - Status: {self.status}"
 

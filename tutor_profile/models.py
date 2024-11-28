@@ -1,10 +1,12 @@
-from django.contrib.auth.models import User
+# tutor_profile/models.py
+
 from django.db import models
+from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    lw_username = models.CharField("LW Username", max_length=150, blank=True, null=True)
-    lw_password = models.CharField("LW Password", max_length=150, blank=True, null=True)
+    lw_username = models.CharField(max_length=255)
+    lw_password = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username}'s Profile"
