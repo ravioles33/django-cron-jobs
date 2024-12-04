@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'tutor_profile',
-    'community_posts',
+    'community_posts.apps.CommunityPostsConfig',  # Asegúrate de usar el AppConfig
     'django_celery_beat',
 ]
 

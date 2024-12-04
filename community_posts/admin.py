@@ -1,8 +1,29 @@
+# community_posts/admin.py
+
 from django.contrib import admin
 from .models import Community, Post
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 import pytz
+
+class CommunityAdmin(admin.ModelAdmin):
+    list_display = ('name', 'community_id', 'creator')
+    readonly_fields = ('creator',)
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.creator == request.user
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.creator == request.user
+        return super().has_delete_permission(request, obj)
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.creator = request.user
+        super().save_model(request, obj, form, change)
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ('community', 'content', 'status', 'scheduled_time', 'author')
@@ -39,11 +60,20 @@ class PostAdmin(admin.ModelAdmin):
             readonly_fields += ['status']
         return readonly_fields
 
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.author == request.user
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and not request.user.is_superuser:
+            return obj.author == request.user
+        return super().has_delete_permission(request, obj)
+
     def save_model(self, request, obj, form, change):
-        # Asignar el autor al post
         if not obj.pk:
             obj.author = request.user
         super().save_model(request, obj, form, change)
 
-admin.site.register(Community)
+admin.site.register(Community, CommunityAdmin)
 admin.site.register(Post, PostAdmin)
