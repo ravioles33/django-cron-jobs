@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM python:3.12-slim
+FROM python:3.12-slim-bullseye
 
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
@@ -68,7 +68,6 @@ RUN if ! command -v dockerize &> /dev/null; then \
     chmod +x /usr/local/bin/dockerize; \
     fi
 
-# Directorio de trabajo
 WORKDIR /app
 
 # Copiar y instalar requerimientos Python
@@ -78,8 +77,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar archivos para Node.js
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
-
-# Instalar dependencias Node.js
 RUN npm install
 
 # Copiar el resto del código al contenedor
@@ -91,8 +88,5 @@ RUN chmod +x /app/entrypoint.sh
 # Exponer el puerto
 EXPOSE 8000
 
-# Establecer el entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
-
-# Comando por defecto
 CMD ["gunicorn", "--bind", ":8000", "phs_main_django.wsgi:application"]

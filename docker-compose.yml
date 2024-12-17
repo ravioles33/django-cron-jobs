@@ -1,6 +1,6 @@
 services:
   web:
-    platform: linux/arm/v7
+    platform: linux/arm64
     build: .
     container_name: django-cron-jobs-web
     entrypoint: ["/app/entrypoint.sh"]
@@ -37,7 +37,7 @@ services:
       CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   celery_worker:
-    platform: linux/arm/v7
+    platform: linux/arm64
     build: .
     container_name: django-cron-jobs-celery_worker
     entrypoint: ["/app/entrypoint.sh"]
@@ -70,7 +70,7 @@ services:
       CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   celery_beat:
-    platform: linux/arm/v7
+    platform: linux/arm64
     build: .
     container_name: django-cron-jobs-celery_beat
     entrypoint: ["/app/entrypoint.sh"]
@@ -103,7 +103,7 @@ services:
       CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
 
   db:
-    platform: linux/arm/v7
+    platform: linux/arm64
     image: postgres:14
     container_name: django-cron-jobs-db
     volumes:
@@ -121,6 +121,7 @@ services:
       - "5432:5432"
 
   rabbitmq:
+    platform: linux/arm64
     image: rabbitmq:3-management
     container_name: django-cron-jobs-rabbitmq
     ports:
