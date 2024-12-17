@@ -1,7 +1,7 @@
 # community_posts/utils/post_status_manager.py
 
 def update_post_status(post, logger):
-    error_statuses = ['pending', 'error', 'error-1', 'error-2', 'error-3', 'error-4', 'error-5']
+    error_statuses = ['pending', 'error-1', 'error-2', 'error-3', 'error-4', 'error-5']
     if post.status in error_statuses:
         current_index = error_statuses.index(post.status)
         if current_index < len(error_statuses) - 1:
