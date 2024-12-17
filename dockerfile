@@ -68,9 +68,6 @@ RUN if ! command -v dockerize &> /dev/null; then \
     chmod +x /usr/local/bin/dockerize; \
     fi
 
-# Crear un usuario y grupo no root con directorio home
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --disabled-password appuser
-
 # Establecer el directorio de trabajo
 WORKDIR /app
 
@@ -80,24 +77,15 @@ COPY requirements.txt /app/requirements.txt
 # Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Cambiar la propiedad de /app a appuser
-RUN chown -R appuser:appgroup /app
-
-# Cambiar al usuario appuser
-USER appuser
-
-# Crear el directorio de caché de Puppeteer y establecer permisos
-RUN mkdir -p /home/appuser/.cache/puppeteer
-
 # Copiar archivos de dependencias Node.js
-COPY --chown=appuser:appgroup package.json /app/package.json
-COPY --chown=appuser:appgroup package-lock.json /app/package-lock.json
+COPY package.json /app/package.json
+COPY package-lock.json /app/package-lock.json
 
 # Instalar las dependencias de Node.js y forzar la descarga de Chromium
 RUN npm install
 
 # Copiar el resto del código al contenedor
-COPY --chown=appuser:appgroup . /app
+COPY . /app
 
 # Asegurarse de que el script de entrada sea ejecutable
 RUN chmod +x /app/entrypoint.sh

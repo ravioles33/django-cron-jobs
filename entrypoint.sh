@@ -3,15 +3,12 @@ set -e
 
 # entrypoint.sh
 
-# Establecer el directorio home para appuser
-export HOME=/home/appuser
-
 # Esperar a que la base de datos y RabbitMQ estén listos
 echo "Esperando a que la base de datos y RabbitMQ estén listos..."
 dockerize -wait tcp://$DB_HOST:$DB_PORT -wait tcp://rabbitmq:5672 -timeout 60s
 
 if [ "$RUN_MIGRATIONS" = "true" ]; then
-    # Comprobar si la base de datos existe y crearla si es necesario
+    # Verificar si la base de datos existe y crearla si no
     echo "Verificando si la base de datos '$DB_NAME' existe..."
     RESULT=$(PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'")
     if [ "$RESULT" != "1" ]; then
@@ -41,15 +38,12 @@ EOF
 fi
 
 if [ "$RUN_COLLECTSTATIC" = "true" ]; then
-    # Ajustar permisos de /app/staticfiles
     echo "Ajustando permisos de /app/staticfiles..."
-    chown -R appuser:appgroup /app/staticfiles
+    chown -R root:root /app/staticfiles
 
-    # Ejecutar collectstatic
     echo "Recopilando archivos estáticos..."
     python manage.py collectstatic --noinput
 fi
 
-# Ejecutar el comando proporcionado
 echo "Iniciando el servicio con el comando: $@"
 exec "$@"
