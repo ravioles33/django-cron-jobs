@@ -68,26 +68,24 @@ RUN if ! command -v dockerize &> /dev/null; then \
     chmod +x /usr/local/bin/dockerize; \
     fi
 
-# Establecer el directorio de trabajo
+# Directorio de trabajo
 WORKDIR /app
 
-# Copiar el archivo de requerimientos
+# Copiar y instalar requerimientos Python
 COPY requirements.txt /app/requirements.txt
-
-# Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar archivos de dependencias Node.js
+# Copiar archivos para Node.js
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 
-# Instalar las dependencias de Node.js y forzar la descarga de Chromium
+# Instalar dependencias Node.js
 RUN npm install
 
 # Copiar el resto del código al contenedor
 COPY . /app
 
-# Asegurarse de que el script de entrada sea ejecutable
+# Asegurar que el script de entrada sea ejecutable
 RUN chmod +x /app/entrypoint.sh
 
 # Exponer el puerto
